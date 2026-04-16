@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Hedar from '@/_Components/Hedar';
 import Footer from '@/_Components/Footer';
@@ -13,7 +13,7 @@ const InvoiceItem = ({ label, value, isBold = false }) => (
   </div>
 );
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const { t, isRTL } = useStore();
   const [orderDetails, setOrderDetails] = useState(null);
@@ -33,7 +33,7 @@ export default function PaymentSuccessPage() {
         date: new Date().toLocaleDateString(isRTL ? 'ar-EG' : 'en-US')
       });
     }
-  }, [searchParams]);
+  }, [searchParams, isRTL]);
 
   if (!orderDetails) {
     return (
@@ -112,5 +112,17 @@ export default function PaymentSuccessPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-[#c19a2e] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
