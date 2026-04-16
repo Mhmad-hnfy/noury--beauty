@@ -22,7 +22,8 @@ export default function OrderSummary({ shippingPrice = 0 }) {
 
   const calculateSubtotal = () => {
     return items.reduce((total, item) => {
-      const priceNum = parseFloat(item.price.replace(/[^\d.]/g, ''));
+      const priceStr = item.price ? item.price.toString() : '0';
+      const priceNum = parseFloat(priceStr.replace(/[^\d.]/g, '')) || 0;
       return total + (priceNum * item.qty);
     }, 0);
   };
@@ -61,7 +62,7 @@ export default function OrderSummary({ shippingPrice = 0 }) {
               </div>
             </div>
             <span className="text-sm font-medium text-gray-900">
-              {parseFloat(item.price.replace(/[^\d.]/g, '')).toFixed(2)} EGP
+              {(item.price ? parseFloat(item.price.toString().replace(/[^\d.]/g, '')) : 0).toFixed(2)} EGP
             </span>
           </div>
         ))}

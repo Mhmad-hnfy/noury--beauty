@@ -66,7 +66,8 @@ export default function CheckoutForm({ onShippingChange }) {
     }
     
     return items.reduce((total, item) => {
-      const price = parseFloat(item.price.toString().replace(/[^0-9.]/g, ''));
+      const priceStr = item.price ? item.price.toString() : '0';
+      const price = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
       return total + (price * item.qty);
     }, 0);
   })();
@@ -97,7 +98,8 @@ export default function CheckoutForm({ onShippingChange }) {
         const shippingPrice = rate ? rate.price : 0;
         
         const subtotalLocal = itemsToOrder.reduce((total, item) => {
-          const price = parseFloat(item.price.toString().replace(/[^0-9.]/g, ''));
+          const priceStr = item.price ? item.price.toString() : '0';
+          const price = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
           return total + (price * item.qty);
         }, 0);
         
