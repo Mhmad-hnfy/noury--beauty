@@ -34,7 +34,7 @@ function Hero() {
              <p className="text-gray-400 text-xs font-bold uppercase tracking-[0.2em]">Loading Collection</p>
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-16 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-12 gap-y-10 md:gap-y-16 w-full">
             {filteredProducts.map(product => (
               <Card 
                 key={product.id}

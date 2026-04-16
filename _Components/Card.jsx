@@ -38,7 +38,7 @@ export default function Card({
                             e.stopPropagation();
                             toggleWishlist(productData);
                         }}
-                        className={`absolute top-4 right-4 bg-white p-2.5 rounded-full shadow-sm transition-all z-10 hover:scale-110 active:scale-90 ${isWishlisted ? 'text-[#6d1616]' : 'text-gray-400 hover:text-black'}`}
+                        className={`absolute top-2 right-2 md:top-4 md:right-4 bg-white p-1.5 md:p-2.5 rounded-full shadow-sm transition-all z-10 hover:scale-110 active:scale-90 ${isWishlisted ? 'text-[#6d1616]' : 'text-gray-400 hover:text-black'}`}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                     </button>
@@ -79,7 +79,7 @@ export default function Card({
                         {colors.map((color, index) => (
                             <div 
                                 key={index}
-                                className="w-8 h-8 rounded-full shadow-inner border border-gray-100" 
+                                className="w-6 h-6 md:w-8 md:h-8 rounded-full shadow-inner border border-gray-100" 
                                 style={{ backgroundColor: color }}
                             />
                         ))}
