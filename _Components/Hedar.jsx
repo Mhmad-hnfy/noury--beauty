@@ -69,16 +69,16 @@ export default function Hedar() {
         <nav className="hidden lg:flex flex-col items-center gap-4 flex-1 justify-center">
           {/* Top Row */}
           <div className="flex gap-8 text-[11px] font-semibold tracking-[0.15em] text-gray-900 uppercase">
-            <a href="#" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('shop_all')}</a>
-            <a href="#" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('face_makeup')}</a>
-            <a href="#" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('body_care')}</a>
+            <a href="#products" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('shop_all')}</a>
+            <a href="#products" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('face_makeup')}</a>
+            <a href="#products" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('body_care')}</a>
           </div>
           {/* Bottom Row */}
           <div className="flex gap-8 text-[11px] font-semibold tracking-[0.15em] text-gray-900 uppercase">
-            <a href="#" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('lips')}</a>
-            <a href="#" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('bundles')}</a>
-            <a href="#" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('about')}</a>
-            <a href="#" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('contact')}</a>
+            <a href="#products" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('lips')}</a>
+            <a href="#products" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('bundles')}</a>
+            <a href="#products" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('about')}</a>
+            <a href="#products" className="hover:text-[#6d1616] transition-colors border-b border-transparent hover:border-[#6d1616]">{t('contact')}</a>
           </div>
         </nav>
 
@@ -159,13 +159,13 @@ export default function Hedar() {
                 <div className="w-px h-3 bg-gray-200" />
                 <button onClick={() => toggleLanguage('ar')} className={`text-[10px] ${language === 'ar' ? 'text-black' : 'text-gray-400'}`}>العربية</button>
              </div>
-            <a href="#" className="hover:text-[#6d1616] py-2 border-b border-gray-50">{t('shop_all')}</a>
-            <a href="#" className="hover:text-[#6d1616] py-2 border-b border-gray-50">{t('face_makeup')}</a>
-            <a href="#" className="hover:text-[#6d1616] py-2 border-b border-gray-50">{t('body_care')}</a>
-            <a href="#" className="hover:text-[#6d1616] py-2 border-b border-gray-50">{t('lips')}</a>
-            <a href="#" className="hover:text-[#6d1616] py-2 border-b border-gray-50">{t('bundles')}</a>
-            <a href="#" className="hover:text-[#6d1616] py-2 border-b border-gray-50">{t('about')}</a>
-            <a href="#" className="hover:text-[#6d1616] py-2 border-b border-gray-50 font-serif lowercase tracking-normal">{t('contact')}</a>
+            <a href="#products" className="hover:text-[#6d1616] py-2 border-b border-gray-50" onClick={() => setIsMenuOpen(false)}>{t('shop_all')}</a>
+            <a href="#products" className="hover:text-[#6d1616] py-2 border-b border-gray-50" onClick={() => setIsMenuOpen(false)}>{t('face_makeup')}</a>
+            <a href="#products" className="hover:text-[#6d1616] py-2 border-b border-gray-50" onClick={() => setIsMenuOpen(false)}>{t('body_care')}</a>
+            <a href="#products" className="hover:text-[#6d1616] py-2 border-b border-gray-50" onClick={() => setIsMenuOpen(false)}>{t('lips')}</a>
+            <a href="#products" className="hover:text-[#6d1616] py-2 border-b border-gray-50" onClick={() => setIsMenuOpen(false)}>{t('bundles')}</a>
+            <a href="#products" className="hover:text-[#6d1616] py-2 border-b border-gray-50" onClick={() => setIsMenuOpen(false)}>{t('about')}</a>
+            <a href="#products" className="hover:text-[#6d1616] py-2 border-b border-gray-50 font-serif lowercase tracking-normal" onClick={() => setIsMenuOpen(false)}>{t('contact')}</a>
           </nav>
         </div>
       )}

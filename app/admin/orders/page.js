@@ -393,8 +393,6 @@ export default function OrdersManager() {
                                     <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{isRTL ? "المحافظة" : "Gov."}</th>
                                     <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{isRTL ? "الدفع" : "Payment"}</th>
                                     <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{t('admin_table_total')}</th>
-                                    <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{isRTL ? "المدفوع" : "Paid"}</th>
-                                    <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{isRTL ? "المتبقي" : "Balance"}</th>
                                     <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{t('admin_table_status')}</th>
                                     <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{t('admin_table_date')}</th>
                                     <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{t('admin_product_actions')}</th>
@@ -421,12 +419,10 @@ export default function OrdersManager() {
                                         <td className="px-6 py-4 text-xs">{order.governorate || '-'}</td>
                                         <td className="px-6 py-4">
                                             <span className="text-[10px] font-bold uppercase px-2 py-1 bg-gray-100 rounded-sm">
-                                                {order.payment_method || 'instapay'}
+                                                {order.payment_method || 'COD'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-bold">{order.total_amount} EGP</td>
-                                        <td className="px-6 py-4 text-green-600 font-medium">{order.deposit_paid || 0} EGP</td>
-                                        <td className="px-6 py-4 text-red-600 font-bold">{(order.total_amount || 0) - (order.deposit_paid || 0)} EGP</td>
                                         <td className="px-6 py-4">
                                             <select 
                                                 value={order.status}
@@ -522,13 +518,13 @@ export default function OrdersManager() {
                                                 <span className="font-bold">{selectedOrder.total_amount} EGP</span>
                                             </div>
                                             <div className="flex justify-between items-center text-xs">
-                                                <span className="text-gray-500 uppercase font-bold">Deposit Paid</span>
+                                                <span className="text-gray-500 uppercase font-bold">Paid Upfront</span>
                                                 <span className="text-green-600 font-bold">{selectedOrder.deposit_paid || 0} EGP</span>
                                             </div>
                                             <div className="h-px bg-gray-200" />
                                             <div className="flex justify-between items-center text-sm">
-                                                <span className="text-red-600 uppercase font-bold">Balance Due</span>
-                                                <span className="text-red-600 font-bold underline">{(selectedOrder.total_amount || 0) - (selectedOrder.deposit_paid || 0)} EGP</span>
+                                                <span className="text-black uppercase font-bold">Remaining Amount</span>
+                                                <span className="text-black font-bold underline">{(selectedOrder.total_amount || 0) - (selectedOrder.deposit_paid || 0)} EGP</span>
                                             </div>
                                         </div>
                                     </div>

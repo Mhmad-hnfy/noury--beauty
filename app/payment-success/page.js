@@ -19,17 +19,14 @@ function PaymentSuccessContent() {
   const [orderDetails, setOrderDetails] = useState(null);
 
   useEffect(() => {
-    // Paymob success callback parameters
     const success = searchParams.get('success');
     const orderId = searchParams.get('id');
-    const amountCents = searchParams.get('amount_cents');
-    const transactionId = searchParams.get('txn_response_code');
+    const amount = searchParams.get('amount');
 
     if (success === 'true') {
       setOrderDetails({
         orderId: orderId,
-        paidAmount: (parseFloat(amountCents) / 100).toFixed(2),
-        transactionId: transactionId,
+        totalAmount: amount,
         date: new Date().toLocaleDateString(isRTL ? 'ar-EG' : 'en-US')
       });
     }
@@ -41,7 +38,7 @@ function PaymentSuccessContent() {
         <Hedar />
         <main className="flex-1 flex flex-col items-center justify-center py-20 px-6">
           <div className="w-16 h-16 border-4 border-[#c19a2e] border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-gray-400 font-medium italic">Verifying Payment...</p>
+          <p className="text-gray-400 font-medium italic">Processing Order...</p>
         </main>
         <Footer />
       </div>
@@ -58,20 +55,27 @@ function PaymentSuccessContent() {
              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
            </div>
            <h1 className="text-4xl md:text-5xl font-serif text-black leading-tight">
-             {isRTL ? "شكراً لك! تم دفع العربون بنجاح" : "Thank You! Deposit Paid Successfully"}
+             {isRTL ? "شكراً لك! تم استلام طلبك" : "Thank You! Order Received"}
            </h1>
-           <p className="text-gray-500 max-w-md">
-             {isRTL 
-               ? "تم استلام دفعة الـ 20% لتأكيد طلبك. ستصلك رسالة تأكيد قريباً." 
-               : "We've received your 20% deposit to confirm your order. A confirmation email will be sent shortly."}
-           </p>
+           <div className="flex flex-col gap-2">
+             <p className="text-gray-500 max-w-md font-medium">
+               {isRTL 
+                 ? "تم تسجيل طلبك بنجاح. سنقوم بمراجعته الآن." 
+                 : "Your order has been placed successfully. We are reviewing it now."}
+             </p>
+             <p className="text-[#c19a2e] font-bold text-lg">
+               {isRTL 
+                 ? "هيتم التواصل في أقرب وقت لتأكيد الأوردر" 
+                 : "We will contact you shortly to confirm your order"}
+             </p>
+           </div>
         </div>
 
         {/* Digital Invoice Section */}
         <div className="bg-gray-50 border border-gray-100 rounded-sm p-8 md:p-12 shadow-sm animate-in fade-in duration-1000">
           <div className="flex justify-between items-start mb-10 pb-6 border-b border-gray-200">
             <div className="flex flex-col gap-1">
-               <h2 className="text-xl font-serif text-black">{isRTL ? "تفاصيل الفاتورة" : "Payment Summary"}</h2>
+               <h2 className="text-xl font-serif text-black">{isRTL ? "تفاصيل الفاتورة" : "Order Summary"}</h2>
                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Ref: {orderDetails.orderId}</p>
             </div>
             <div className="text-right">
@@ -80,11 +84,11 @@ function PaymentSuccessContent() {
           </div>
 
           <div className="flex flex-col gap-2 mb-10">
-            <InvoiceItem label={isRTL ? "رقم العملية" : "Transaction ID"} value={orderDetails.transactionId} />
-            <InvoiceItem label={isRTL ? "المبلغ المدفوع (20%)" : "Paid Amount (20%)"} value={`${orderDetails.paidAmount} EGP`} isBold />
+            <InvoiceItem label={isRTL ? "رقم الطلب" : "Order ID"} value={orderDetails.orderId} />
+            <InvoiceItem label={isRTL ? "المبلغ الإجمالي" : "Total Amount"} value={`${orderDetails.totalAmount} EGP`} isBold />
             <div className="mt-4 p-4 bg-white border border-dashed border-gray-200 rounded-sm flex justify-between items-center italic">
-               <span className="text-xs text-gray-400 font-medium">{isRTL ? "المبلغ المتبقي (عند الاستلام)" : "Remaining Balance (COD)"}</span>
-               <span className="text-lg font-bold text-gray-900">{(parseFloat(orderDetails.paidAmount) * 4).toFixed(2)} EGP</span>
+               <span className="text-xs text-gray-400 font-medium">{isRTL ? "طريقة الدفع" : "Payment Method"}</span>
+               <span className="text-sm font-bold text-gray-900">{isRTL ? "الدفع عند الاستلام" : "Cash on Delivery"}</span>
             </div>
           </div>
 

@@ -75,7 +75,6 @@ export default function CheckoutForm({ onShippingChange }) {
   const shippingRate = shippingRates.find(r => r.name_ar === formData.governorate || r.name_en === formData.governorate);
   const shippingPrice = shippingRate ? shippingRate.price : 0;
   const finalTotal = subtotal + shippingPrice;
-  const depositAmount = finalTotal * 0.2;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -104,19 +103,17 @@ export default function CheckoutForm({ onShippingChange }) {
         }, 0);
         
         const finalTotalLocal = subtotalLocal + shippingPrice;
-        const depositAmountLocal = Math.round(finalTotalLocal * 0.2);
 
         if (!supabase) {
             console.log("Order details (Demo Mode):", {
                 customer_name: `${formData.firstName} ${formData.lastName}`.trim(),
                 customer_phone: `${formData.phone} / ${formData.phone2}`,
                 total_amount: finalTotalLocal,
-                deposit_amount: depositAmountLocal,
                 shipping_address: `${formData.address}, ${formData.governorate}`
             });
         }
 
-        // 1. Create order in DB as pending
+        // 1. Create order in DB
         const { data: orderData, error: dbError } = await supabase
             .from('orders')
             .insert([{
@@ -124,12 +121,12 @@ export default function CheckoutForm({ onShippingChange }) {
                 customer_email: formData.identity,
                 total_amount: finalTotalLocal,
                 deposit_paid: 0, 
-                deposit_required: depositAmountLocal,
-                status: 'awaiting_payment',
+                deposit_required: 0,
+                status: 'pending',
                 items: itemsToOrder,
                 customer_phone: `${formData.phone} / ${formData.phone2}`,
                 governorate: formData.governorate,
-                payment_method: 'paymob_deposit',
+                payment_method: 'Cash on Delivery',
                 shipping_address: `${formData.address}, ${formData.apartment}, ${formData.city}, ${formData.governorate}`
             }])
             .select()
@@ -137,50 +134,12 @@ export default function CheckoutForm({ onShippingChange }) {
 
         if (dbError) throw dbError;
 
-        // 2. Call our API to get Paymob token
-        const payRes = await fetch('/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                amount: depositAmountLocal,
-                customer: {
-                    ...formData,
-                    phone: formData.paymentMethod === 'wallet' ? walletPhone : formData.phone
-                },
-                items: itemsToOrder,
-                paymentMethod: formData.paymentMethod || 'wallet'
-            })
-        });
-
-        const { token, iframeId, redirectUrl, success, message, paymobOrderId, error: payError } = await payRes.json();
-
-        if (payError) throw new Error(payError);
-
-        // 3. Update Supabase order with Paymob Order ID for tracking
-        if (supabase) {
-            await supabase
-                .from('orders')
-                .update({ paymob_order_id: paymobOrderId })
-                .eq('id', orderData.id);
-        }
-
-        // 4. Redirect
+        // 2. Redirect
         localStorage.removeItem('noury_checkout_item');
         clearCart();
         
-        if (success && message === 'USSD_PUSH_SENT') {
-            alert("تم إرسال طلب الدفع إلى محفظتك بنجاح. يرجى فتح هاتفك المحمول الآن والموافقة على العملية بكتابة الرقم السري للمحفظة.");
-            router.push('/payment-success'); 
-            return;
-        }
-
-        if (redirectUrl) {
-            // Direct redirect for Wallets
-            window.location.href = redirectUrl;
-        } else {
-            // Iframe redirect for Cards
-            window.location.href = `https://accept.paymob.com/api/acceptance/iframes/${iframeId}?payment_token=${token}`;
-        }
+        // Pass order details to success page
+        router.push(`/payment-success?success=true&id=${orderData.id}&amount=${finalTotalLocal}`);
 
     } catch (err) {
         alert("عذراً، حدث خطأ أثناء إتمام الطلب: " + err.message);
@@ -294,82 +253,6 @@ export default function CheckoutForm({ onShippingChange }) {
              <span className="text-base">{isRTL ? "الإجمالي الكلي" : "Total Amount"}</span>
              <span className="text-xl tracking-tight font-bold">{finalTotal.toFixed(2)} EGP</span>
            </div>
-           
-           {/* Deposit Amount Highlight */}
-           <div className="mt-4 p-4 bg-white border border-dashed border-[#c19a2e]/30 rounded-sm flex flex-col gap-1 items-center animate-in zoom-in-95 duration-700">
-             <span className="text-[#c19a2e] text-[10px] font-bold uppercase tracking-[0.2em]">
-               {isRTL ? "المبلغ المطلوب دفعه لتأكيد الطلب (20%)" : "Required Deposit to Confirm (20%)"}
-             </span>
-             <span className="text-2xl font-bold text-black font-serif">
-               {depositAmount.toFixed(2)} EGP
-             </span>
-             <span className="text-[9px] text-gray-400 italic">
-                {isRTL ? "سيتم دفع المبلغ المتبقي عند الاستلام" : "Remaining balance will be paid on delivery"}
-             </span>
-           </div>
-        </div>
-      </section>
-
-    <section className="flex flex-col gap-6">
-        <h2 className="text-xl font-medium text-gray-900">{t('checkout_payment')}</h2>
-        <div className="border border-gray-200 rounded-md overflow-hidden">
-          {/* Mobile Wallet Option */}
-           <div className={`p-6 flex flex-col gap-3 border-b border-gray-100 cursor-pointer transition-colors ${formData.paymentMethod === 'wallet' ? 'bg-gray-50' : 'bg-white'}`}
-                onClick={() => setFormData({...formData, paymentMethod: 'wallet'})}>
-             <div className="flex items-center gap-3">
-                 <input 
-                     type="radio" name="payment" id="wallet" className="w-4 h-4 accent-[#c19a2e]" 
-                     checked={formData.paymentMethod === 'wallet' || !formData.paymentMethod}
-                     onChange={() => setFormData({...formData, paymentMethod: 'wallet'})}
-                 />
-                 <label htmlFor="wallet" className="text-sm font-bold text-gray-900 uppercase tracking-wider cursor-pointer">
-                     {isRTL ? "المحافظ الإلكترونية (فودافون كاش / إلخ)" : "Mobile Wallets (Vodafone Cash / etc.)"}
-                 </label>
-             </div>
-
-             {/* Dynamic Wallet Number Input */}
-             {(formData.paymentMethod === 'wallet' || !formData.paymentMethod) && (
-               <div className="ml-7 mt-2 space-y-2 animate-in fade-in slide-in-from-top-1 duration-300" onClick={(e) => e.stopPropagation()}>
-                 <label className="text-[10px] font-bold text-[#c19a2e] uppercase tracking-wider">
-                   {isRTL ? "رقم المحفظة (الذي ستدفع منه)" : "Wallet Number (for payment)"}
-                 </label>
-                 <input 
-                   type="tel"
-                   placeholder="01xxxxxxxxx"
-                   required={formData.paymentMethod === 'wallet'}
-                   value={walletPhone}
-                   onChange={(e) => setWalletPhone(e.target.value)}
-                   className="w-full h-10 px-4 border border-gray-200 rounded-md focus:outline-none focus:border-[#c19a2e] text-sm"
-                 />
-               </div>
-             )}
-
-             <p className="text-[10px] text-gray-500 leading-relaxed indent-7">
-                 {isRTL 
-                   ? "ادفع 20% مقدم عبر أي محفظة إلكترونية لتأكيد طلبك." 
-                   : "Pay 20% deposit via any mobile wallet to confirm your order."}
-             </p>
-           </div>
-
-          {/* Online Card Option */}
-          <div className={`p-6 flex flex-col gap-3 cursor-pointer transition-colors ${formData.paymentMethod === 'card' ? 'bg-gray-50' : 'bg-white'}`}
-               onClick={() => setFormData({...formData, paymentMethod: 'card'})}>
-            <div className="flex items-center gap-3">
-                <input 
-                    type="radio" name="payment" id="card" className="w-4 h-4 accent-[#c19a2e]" 
-                    checked={formData.paymentMethod === 'card'}
-                    onChange={() => setFormData({...formData, paymentMethod: 'card'})}
-                />
-                <label htmlFor="card" className="text-sm font-bold text-gray-900 uppercase tracking-wider cursor-pointer">
-                    {isRTL ? "بطاقة بنكية / انستا باي (Visa / Master)" : "Bank Card / Instapay (Visa / Master)"}
-                </label>
-            </div>
-            <p className="text-[10px] text-gray-500 leading-relaxed indent-7">
-                {isRTL 
-                  ? "ادفع 20% مقدم عبر بطاقتك البنكية أو انستا باي." 
-                  : "Pay 20% deposit via your bank card or Instapay."}
-            </p>
-          </div>
         </div>
       </section>
 

@@ -13,7 +13,7 @@ function Hero() {
   );
 
   return (
-    <section className="py-24 px-6 bg-white min-h-fit">
+    <section id="products" className="py-24 px-6 bg-white min-h-fit">
       <div className="max-w-7xl mx-auto flex flex-col items-center">
         <h2 className="text-4xl md:text-5xl font-serif text-black mb-10 text-center tracking-tight leading-tight">
           {t('best_seller')}
