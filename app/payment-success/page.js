@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Hedar from '@/_Components/Hedar';
 import Footer from '@/_Components/Footer';
@@ -100,12 +101,12 @@ function PaymentSuccessContent() {
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M6 9V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v5"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
               {isRTL ? "طباعة الفاتورة" : "Print Invoice"}
             </button>
-            <a 
+            <Link 
               href="/"
               className="w-full h-12 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-[#c19a2e] transition-all flex items-center justify-center"
             >
               {isRTL ? "العودة للمتجر" : "Back to Store"}
-            </a>
+            </Link>
           </div>
         </div>
 

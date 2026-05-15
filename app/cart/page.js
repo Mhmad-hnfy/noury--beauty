@@ -1,6 +1,8 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useStore } from '@/context/StoreContext';
 import Hedar from '@/_Components/Hedar';
 import Footer from '@/_Components/Footer';
@@ -25,12 +27,12 @@ export default function CartPage() {
                 {cart.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 border-y border-gray-100 italic text-gray-400">
                         <p className="text-lg mb-8">{t('cart_empty')}</p>
-                        <a 
+                        <Link 
                             href="/" 
                             className="text-xs font-bold uppercase tracking-widest text-black border-b border-black pb-1 hover:text-[#6d1616] hover:border-[#6d1616] transition-colors"
                         >
                             {t('cart_continue')}
-                        </a>
+                        </Link>
                     </div>
                 ) : (
                     <div className="flex flex-col lg:flex-row gap-16">
@@ -50,8 +52,8 @@ export default function CartPage() {
                                     <div key={item.cartItemId} className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 py-6 md:py-8 items-center">
                                         {/* Product Details (Responsive Flex) */}
                                         <div className="col-span-1 md:col-span-6 flex gap-4 md:gap-6">
-                                            <div className="w-20 h-28 md:w-24 md:h-32 bg-gray-50 border border-gray-100 rounded-sm overflow-hidden shrink-0">
-                                                <img src={item.image || item.displayImage} alt={item.title} className="w-full h-full object-contain" />
+                                            <div className="w-28 h-36 md:w-36 md:h-48 bg-gray-50 border border-gray-100 rounded-sm overflow-hidden shrink-0 relative">
+                                                <Image src={item.image || item.displayImage} alt={item.title} fill sizes="(max-width: 768px) 112px, 144px" className="object-contain" />
                                             </div>
                                             <div className="flex flex-col justify-center flex-1">
                                                 <div className="flex justify-between items-start md:block">
@@ -62,15 +64,12 @@ export default function CartPage() {
                                                     </span>
                                                 </div>
                                                 
-                                                {item.selectedColor && (
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <div 
-                                                            className="w-2.5 h-2.5 rounded-full border border-gray-100 shadow-sm"
-                                                            style={{ backgroundColor: item.selectedColor }}
-                                                        />
-                                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{item.selectedColor}</span>
-                                                    </div>
-                                                )}
+                                                
+                                                <div className="mt-1">
+                                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${item.stock > 0 ? 'text-gray-400' : 'text-red-500'}`}>
+                                                        {item.stock > 0 ? `${t('stock_available')}: ${item.stock}` : t('out_of_stock')}
+                                                    </span>
+                                                </div>
 
                                                 <button 
                                                     onClick={() => removeFromCart(item.cartItemId)}
@@ -99,7 +98,8 @@ export default function CartPage() {
                                                 <span className="w-8 text-center text-xs font-bold">{item.qty}</span>
                                                 <button 
                                                     onClick={() => updateCartQty(item.cartItemId, item.qty + 1)}
-                                                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black transition-colors"
+                                                    disabled={item.qty >= (item.stock || 99)}
+                                                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black transition-colors disabled:opacity-20"
                                                 >
                                                     +
                                                 </button>
@@ -128,19 +128,19 @@ export default function CartPage() {
                                     </p>
                                 </div>
 
-                                <a 
+                                <Link 
                                     href="/checkout"
                                     className="w-full h-16 bg-black text-white text-xs font-bold uppercase tracking-[0.2em] flex items-center justify-center hover:bg-[#6d1616] transition-all duration-300 shadow-xl shadow-black/5"
                                 >
                                     {t('cart_checkout')}
-                                </a>
+                                </Link>
 
-                                <a 
+                                <Link 
                                     href="/"
                                     className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors"
                                 >
                                     {t('cart_continue')}
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </div>

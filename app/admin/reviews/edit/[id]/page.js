@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/context/StoreContext';
+import imageCompression from 'browser-image-compression';
 
 export default function EditReview() {
     const router = useRouter();
@@ -59,13 +60,21 @@ export default function EditReview() {
             let finalImageUrl = preview;
 
             if (supabase && imageFile) {
-                const fileExt = imageFile.name.split('.').pop();
-                const fileName = `${Math.random()}.${fileExt}`;
+                // Compress Image
+                const options = {
+                    maxSizeMB: 0.5,
+                    maxWidthOrHeight: 1200,
+                    useWebWorker: true,
+                    fileType: "image/webp"
+                };
+                const compressedFile = await imageCompression(imageFile, options);
+
+                const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.webp`;
                 const filePath = `reviews/${fileName}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from('product-images')
-                    .upload(filePath, imageFile);
+                    .upload(filePath, compressedFile);
 
                 if (uploadError) throw uploadError;
 

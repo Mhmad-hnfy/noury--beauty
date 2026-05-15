@@ -1,12 +1,14 @@
 "use client";
 
-import React from 'react'
-import Card from './Card'
-import Saying from './Saying'
+import React, { useState } from 'react';
+import Card from './Card';
+import Saying from './Saying';
+import QuickView from './QuickView';
 import { useStore } from '@/context/StoreContext';
 
 function Hero() {
   const { t, searchQuery, language, products, isLoading } = useStore();
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
 
   const filteredProducts = products.filter(product => 
     product.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -35,7 +37,7 @@ function Hero() {
           </div>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-12 gap-y-10 md:gap-y-16 w-full">
-            {filteredProducts.map(product => (
+            {filteredProducts.map((product, index) => (
               <Card 
                 key={product.id}
                 id={product.id}
@@ -45,6 +47,10 @@ function Hero() {
                 colors={product.colors}
                 image={product.images?.[0] || product.image}
                 allImages={product.images || [product.image]}
+                variants={product.variants}
+                stock={product.stock}
+                priority={index < 4}
+                onQuickView={setQuickViewProduct}
               />
             ))}
           </div>
@@ -57,8 +63,15 @@ function Hero() {
         <Saying />  
         
       </div>
+
+      {/* Single QuickView modal instance for all cards */}
+      <QuickView 
+        isOpen={!!quickViewProduct} 
+        onClose={() => setQuickViewProduct(null)} 
+        product={quickViewProduct}
+      />
     </section>
   )
 }
 
-export default Hero
+export default Hero

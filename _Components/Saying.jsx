@@ -70,6 +70,7 @@ const REVIEWS = [
 ];
 
 import { useStore } from '@/context/StoreContext';
+import Image from 'next/image';
 
 function Saying() {
   const { reviews, isReviewsLoading, language } = useStore();
@@ -160,10 +161,12 @@ function Saying() {
                             <div className="flex flex-col items-center gap-4 px-4">
                                 {rev.image ? (
                                     <div className="relative w-40 h-40 group cursor-pointer">
-                                        <img 
+                                        <Image 
                                             src={rev.image} 
                                             alt={rev.product}
-                                            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                                            fill
+                                            sizes="160px"
+                                            className="object-contain transition-transform duration-500 group-hover:scale-110"
                                         />
                                         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 rounded-full transition-opacity" />
                                     </div>

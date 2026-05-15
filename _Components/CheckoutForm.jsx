@@ -133,6 +133,27 @@ export default function CheckoutForm({ onShippingChange }) {
             .single();
 
         if (dbError) throw dbError;
+        
+        // 1.5 Decrement Stock in DB
+        for (const item of itemsToOrder) {
+            try {
+                const { data: prod } = await supabase
+                    .from('products')
+                    .select('stock')
+                    .eq('id', item.id)
+                    .single();
+                
+                if (prod && prod.stock !== undefined) {
+                    const newStock = Math.max(0, (prod.stock || 0) - item.qty);
+                    await supabase
+                        .from('products')
+                        .update({ stock: newStock })
+                        .eq('id', item.id);
+                }
+            } catch (err) {
+                console.error("Failed to update stock for item:", item.id, err);
+            }
+        }
 
         // 2. Redirect
         localStorage.removeItem('noury_checkout_item');

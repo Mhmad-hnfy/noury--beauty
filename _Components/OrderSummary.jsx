@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useStore } from '@/context/StoreContext';
 
 export default function OrderSummary({ shippingPrice = 0 }) {
@@ -41,24 +42,13 @@ export default function OrderSummary({ shippingPrice = 0 }) {
           <div key={index} className="flex justify-between items-center gap-4">
             <div className="flex items-center gap-4">
               <div className="relative w-16 h-20 bg-white border border-gray-200 rounded-sm overflow-hidden shrink-0">
-                <img src={item.displayImage || item.image} alt={item.title} className="w-full h-full object-contain" />
+                <Image src={item.displayImage || item.image} alt={item.title} fill sizes="64px" className="object-contain" />
                 <span className={`absolute -top-1 ${isRTL ? '-left-1' : '-right-1'} min-w-[20px] h-5 px-1 bg-[#6d1616] text-white text-[10px] flex items-center justify-center rounded-full font-bold shadow-sm`}>
                   {item.qty}
                 </span>
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="text-xs md:text-sm font-bold text-gray-900 uppercase tracking-tight">{item.title}</h3>
-                <div className="flex items-center gap-2">
-                    {item.selectedColor && (
-                        <div 
-                            className="w-3 h-3 rounded-full border border-gray-200 shadow-sm" 
-                            style={{ backgroundColor: item.selectedColor }}
-                        />
-                    )}
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-[0.1em]">
-                        {item.selectedColor || t('standard')}
-                    </p>
-                </div>
               </div>
             </div>
             <span className="text-sm font-medium text-gray-900">

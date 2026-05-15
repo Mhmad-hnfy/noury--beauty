@@ -4,22 +4,21 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/context/StoreContext';
+import imageCompression from 'browser-image-compression';
 
 export default function EditProduct() {
     const { id } = useParams();
     const router = useRouter();
-    const { products, fetchProducts, updateProduct, isLoading } = useStore();
-    
+    const { products, fetchProducts, isLoading } = useStore();
+
     const [loading, setLoading] = useState(false);
     const [notFound, setNotFound] = useState(false);
-    
-    const [formData, setFormData] = useState({
-        title: '',
-        price: '',
-        oldPrice: '',
-    });
 
-    const [variants, setVariants] = useState([]);
+    const [formData, setFormData] = useState({ title: '', price: '', oldPrice: '', stock: '0' });
+
+    const [existingImages, setExistingImages] = useState([]);
+    const [imageFiles, setImageFiles] = useState([]);
+    const [previews, setPreviews] = useState([]);
 
     useEffect(() => {
         if (!isLoading) {
@@ -29,25 +28,12 @@ export default function EditProduct() {
                     title: product.title,
                     price: product.price,
                     oldPrice: product.oldPrice || '',
+                    stock: product.stock?.toString() || '0',
                 });
-                
-                // Convert existing data to variants structure if needed
-                if (product.variants && product.variants.length > 0) {
-                    setVariants(product.variants.map(v => ({
-                        ...v,
-                        imageFile: null,
-                        preview: v.image
-                    })));
-                } else if (product.colors && product.colors.length > 0) {
-                    // Fallback for old products
-                    setVariants(product.colors.map((c, idx) => ({
-                        color: c,
-                        colorName: '',
-                        image: product.images?.[idx] || product.image,
-                        imageFile: null,
-                        preview: product.images?.[idx] || product.image
-                    })));
-                }
+
+                const imgs = product.images || (product.image ? [product.image] : []);
+                setExistingImages(imgs);
+                setPreviews(imgs);
                 setNotFound(false);
             } else {
                 setNotFound(true);
@@ -55,100 +41,81 @@ export default function EditProduct() {
         }
     }, [id, products, isLoading]);
 
-    const addVariant = () => {
-        setVariants([...variants, { color: '#000000', colorName: '', imageFile: null, preview: null }]);
+    const handleAddImages = (files) => {
+        const newFiles = Array.from(files);
+        const newPreviews = newFiles.map(f => URL.createObjectURL(f));
+        setImageFiles([...imageFiles, ...newFiles]);
+        setPreviews([...previews, ...newPreviews]);
     };
 
-    const updateVariant = (index, field, value) => {
-        const newVariants = [...variants];
-        if (field === 'imageFile') {
-            newVariants[index].imageFile = value;
-            newVariants[index].preview = URL.createObjectURL(value);
+    const removeImage = (index) => {
+        const existingCount = existingImages.length;
+        if (index < existingCount) {
+            setExistingImages(existingImages.filter((_, i) => i !== index));
         } else {
-            newVariants[index][field] = value;
+            const fileIndex = index - existingCount;
+            setImageFiles(imageFiles.filter((_, i) => i !== fileIndex));
         }
-        setVariants(newVariants);
-    };
-
-    const removeVariant = (index) => {
-        setVariants(variants.filter((_, i) => i !== index));
+        setPreviews(previews.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (previews.length === 0) {
+            alert("Please add at least one image");
+            return;
+        }
         setLoading(true);
 
         try {
-            const finalVariants = [];
-            const allImages = [];
-            const allColors = [];
+            const uploadedNewImages = [];
 
-            if (!supabase) {
-                // Demo Mode
-                variants.forEach(v => {
-                    const imgUrl = v.preview;
-                    finalVariants.push({ color: v.color, colorName: v.colorName, image: imgUrl });
-                    allImages.push(imgUrl);
-                    allColors.push(v.color);
-                });
+            if (supabase) {
+                for (const file of imageFiles) {
+                    const options = {
+                        maxSizeMB: 0.5,
+                        maxWidthOrHeight: 1200,
+                        useWebWorker: true,
+                        fileType: "image/webp"
+                    };
+                    const compressedFile = await imageCompression(file, options);
 
-                await updateProduct(id, {
-                    ...formData,
-                    variants: finalVariants,
-                    images: allImages,
-                    colors: allColors
-                });
-                alert("Updated in Demo Mode");
-                router.push('/admin/products');
-                return;
-            }
-
-            // 1. Upload Images for modified variants
-            for (const v of variants) {
-                let publicUrl = v.preview; 
-
-                if (v.imageFile) {
-                    const fileExt = v.imageFile.name.split('.').pop();
-                    const fileName = `${Math.random()}.${fileExt}`;
+                    const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.webp`;
                     const filePath = `products/${fileName}`;
 
                     const { error: uploadError } = await supabase.storage
                         .from('product-images')
-                        .upload(filePath, v.imageFile);
+                        .upload(filePath, compressedFile);
 
                     if (uploadError) throw uploadError;
 
-                    const { data: { publicUrl: url } } = supabase.storage
+                    const { data: { publicUrl } } = supabase.storage
                         .from('product-images')
                         .getPublicUrl(filePath);
-                    
-                    publicUrl = url;
+
+                    uploadedNewImages.push(publicUrl);
                 }
 
-                finalVariants.push({
-                    color: v.color,
-                    colorName: v.colorName,
-                    image: publicUrl
-                });
-                
-                if (publicUrl) allImages.push(publicUrl);
-                allColors.push(v.color);
+                const allImages = [...existingImages, ...uploadedNewImages];
+
+                const { error } = await supabase
+                    .from('products')
+                    .update({
+                        title: formData.title,
+                        price: parseFloat(formData.price),
+                        old_price: formData.oldPrice ? parseFloat(formData.oldPrice) : null,
+                        stock: parseInt(formData.stock) || 0,
+                        images: allImages,
+                        colors: [],
+                        variants: []
+                    })
+                    .eq('id', id);
+
+                if (error) throw error;
+            } else {
+                // Demo Mode update placeholder
+                alert("Updated in Demo Mode");
             }
-
-            // 2. Update DB
-            const { error } = await supabase
-                .from('products')
-                .update({
-                    title: formData.title,
-                    price: parseFloat(formData.price),
-                    old_price: formData.oldPrice ? parseFloat(formData.oldPrice) : null,
-                    colors: allColors,
-                    images: allImages,
-                    variants: finalVariants
-                })
-                .eq('id', id);
-
-            if (error) throw error;
 
             await fetchProducts();
             router.push('/admin/products');
@@ -159,73 +126,88 @@ export default function EditProduct() {
         }
     };
 
-    if (notFound) return <div className="p-20 text-center">Product Not Found.</div>;
-    if (isLoading) return <div className="p-20 text-center">Loading...</div>;
+    if (notFound) return <div className="p-20 text-center text-gray-400">Product not found.</div>;
+    if (isLoading) return <div className="p-20 text-center"><div className="w-8 h-8 border-4 border-[#6d1616] border-t-transparent rounded-full animate-spin mx-auto"></div></div>;
 
     return (
         <div className="max-w-6xl flex flex-col gap-10 pb-20">
             <div className="flex flex-col gap-1">
-                <h3 className="text-2xl font-serif text-black">Edit Product: {formData.title}</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Manage Variants & Color Mapping</p>
+                <h3 className="text-2xl font-serif text-black">Edit: {formData.title}</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Upload product images</p>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-10">
+
+                {/* Basic Info */}
                 <div className="bg-white p-10 border border-gray-100 rounded-sm shadow-sm flex flex-col gap-8">
                     <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#6d1616] border-b border-gray-50 pb-4">Core Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <InputGroup label="Product title" value={formData.title} onChange={(v) => setFormData({...formData, title: v})} />
+                        <InputGroup label="Product Title" value={formData.title} onChange={(v) => setFormData({...formData, title: v})} />
                         <InputGroup label="Price (EGP)" type="number" value={formData.price} onChange={(v) => setFormData({...formData, price: v})} />
-                        <InputGroup label="Old Price" type="number" value={formData.oldPrice} onChange={(v) => setFormData({...formData, oldPrice: v})} />
+                        <InputGroup label="Old Price (Optional)" type="number" value={formData.oldPrice} onChange={(v) => setFormData({...formData, oldPrice: v})} />
+                        <InputGroup label="Stock Quantity" type="number" value={formData.stock} onChange={(v) => setFormData({...formData, stock: v})} />
                     </div>
                 </div>
 
+                {/* Images */}
                 <div className="bg-white p-10 border border-gray-100 rounded-sm shadow-sm flex flex-col gap-8">
                     <div className="flex justify-between items-center border-b border-gray-50 pb-4">
-                        <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#6d1616]">Color & Image Variants</h4>
-                        <button type="button" onClick={addVariant} className="text-[10px] font-bold text-[#6d1616] flex items-center gap-2">
-                             <span className="text-xl">+</span> Add Color
-                        </button>
+                        <div>
+                            <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#6d1616]">Product Images</h4>
+                            <p className="text-[9px] text-gray-400 mt-1">First image will be the main display image</p>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {variants.map((v, idx) => (
-                            <div key={idx} className="relative bg-gray-50 p-6 rounded-sm border border-gray-100 flex flex-col gap-4">
-                                <button type="button" onClick={() => removeVariant(idx)} className="absolute -top-2 -right-2 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-red-500 shadow-sm z-10">×</button>
-                                
-                                <div className="aspect-square bg-white border border-gray-200 rounded-sm overflow-hidden relative">
-                                    <img src={v.preview} className="w-full h-full object-contain" />
-                                    <input 
-                                        type="file" 
-                                        accept="image/*"
-                                        onChange={(e) => updateVariant(idx, 'imageFile', e.target.files[0])}
-                                        className="absolute inset-0 opacity-0 cursor-pointer"
-                                    />
-                                    <div className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[8px] py-1 text-center uppercase tracking-widest font-bold">Change Image</div>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    <input type="color" value={v.color} onChange={(e) => updateVariant(idx, 'color', e.target.value)} className="w-10 h-10 border-none cursor-pointer" />
-                                    <input type="text" value={v.colorName} onChange={(e) => updateVariant(idx, 'colorName', e.target.value)} placeholder="Color Name" className="flex-1 h-10 px-3 text-xs bg-white border border-gray-200" />
-                                </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {previews.map((src, idx) => (
+                            <div key={idx} className="relative aspect-square bg-gray-50 border border-gray-100 rounded-sm overflow-hidden group">
+                                <img src={src} className="w-full h-full object-contain" alt="" />
+                                {idx === 0 && (
+                                    <div className="absolute top-1 left-1 bg-[#6d1616] text-white text-[7px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
+                                        Main
+                                    </div>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => removeImage(idx)}
+                                    className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                </button>
                             </div>
                         ))}
+
+                        <label className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-sm flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#6d1616] hover:bg-[#6d1616]/5 transition-all group">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 group-hover:text-[#6d1616] transition-colors"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+                            <span className="text-[9px] font-bold text-gray-300 group-hover:text-[#6d1616] uppercase tracking-widest transition-colors">Add Image</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => handleAddImages(e.target.files)}
+                            />
+                        </label>
                     </div>
                 </div>
 
+                {/* Actions */}
                 <div className="flex justify-end gap-4">
-                     <button type="button" onClick={() => router.back()} className="h-14 px-8 border border-gray-200 text-gray-400 font-bold text-xs uppercase tracking-widest">Cancel</button>
-                     <button type="submit" disabled={loading} className="h-14 px-12 bg-[#6d1616] text-white font-bold text-xs uppercase tracking-widest shadow-xl">{loading ? 'Saving...' : 'Update Product'}</button>
+                    <button type="button" onClick={() => router.back()} className="h-14 px-8 border border-gray-200 text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-black hover:border-black transition-all">Cancel</button>
+                    <button type="submit" disabled={loading} className="h-14 px-12 bg-[#6d1616] text-white font-bold text-xs uppercase tracking-widest shadow-xl hover:bg-black transition-all disabled:opacity-50">
+                        {loading ? 'Saving...' : 'Update Product'}
+                    </button>
                 </div>
             </form>
         </div>
     );
 }
 
-function InputGroup({ label, placeholder, type="text", value, onChange }) {
+function InputGroup({ label, placeholder, type = "text", value, onChange }) {
     return (
         <div className="flex flex-col gap-2">
             <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</label>
-            <input 
+            <input
                 type={type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}

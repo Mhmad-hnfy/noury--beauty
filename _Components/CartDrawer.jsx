@@ -1,6 +1,8 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useStore } from '@/context/StoreContext';
 
 export default function CartDrawer({ isOpen, onClose }) {
@@ -41,8 +43,8 @@ export default function CartDrawer({ isOpen, onClose }) {
                     ) : (
                         cart.map((item) => (
                             <div key={item.cartItemId} className="flex gap-4 group">
-                                <div className="w-20 h-28 bg-gray-50 border border-gray-100 rounded-sm overflow-hidden shrink-0">
-                                    <img src={item.image || item.displayImage} alt={item.title} className="w-full h-full object-contain" />
+                                <div className="w-24 h-32 md:w-28 md:h-36 bg-gray-50 border border-gray-100 rounded-sm overflow-hidden shrink-0 relative">
+                                    <Image src={item.image || item.displayImage} alt={item.title} fill sizes="112px" className="object-contain" />
                                 </div>
                                 <div className="flex-1 flex flex-col justify-between py-1">
                                     <div>
@@ -55,12 +57,11 @@ export default function CartDrawer({ isOpen, onClose }) {
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                                             </button>
                                         </div>
-                                        {item.selectedColor && (
-                                            <div className="flex items-center gap-1.5 mt-1">
-                                                <div className="w-2 h-2 rounded-full border border-gray-200" style={{ backgroundColor: item.selectedColor }} />
-                                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{item.selectedColor}</span>
-                                            </div>
-                                        )}
+                                        <div className="mt-1">
+                                            <span className={`text-[9px] font-bold uppercase tracking-widest ${item.stock > 0 ? 'text-gray-400' : 'text-red-500'}`}>
+                                                {item.stock > 0 ? `${t('stock_available')}: ${item.stock}` : t('out_of_stock')}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div className="flex items-center justify-between mt-4">
@@ -74,7 +75,8 @@ export default function CartDrawer({ isOpen, onClose }) {
                                             <span className="w-8 text-center text-[11px] font-bold">{item.qty}</span>
                                             <button 
                                                 onClick={() => updateCartQty(item.cartItemId, item.qty + 1)}
-                                                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-black transition-colors text-xs"
+                                                disabled={item.qty >= (item.stock || 99)}
+                                                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-black transition-colors text-xs disabled:opacity-20"
                                             >
                                                 +
                                             </button>
@@ -97,19 +99,20 @@ export default function CartDrawer({ isOpen, onClose }) {
                     </div>
                     
                     <div className="flex flex-col gap-3">
-                        <a 
+                        <Link 
                             href="/checkout"
+                            onClick={onClose}
                             className="w-full h-14 bg-black text-white text-[11px] font-bold uppercase tracking-[0.2em] flex items-center justify-center hover:bg-[#6d1616] transition-all duration-300 shadow-xl"
                         >
                             {t('cart_checkout')}
-                        </a>
-                        <a 
+                        </Link>
+                        <Link 
                             href="/cart"
                             onClick={onClose}
                             className="w-full h-14 bg-white border border-gray-200 text-black text-[11px] font-bold uppercase tracking-[0.2em] flex items-center justify-center hover:bg-gray-50 transition-all duration-300"
                         >
                             {isRTL ? "عرض السلة كاملة" : "View Full Cart"}
-                        </a>
+                        </Link>
                     </div>
                     
                     <p className="text-[10px] text-gray-400 italic text-center mt-4">

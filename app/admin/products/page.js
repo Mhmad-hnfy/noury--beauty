@@ -50,7 +50,7 @@ export default function ProductsManager() {
                                     <th className="px-6 py-4 w-20"></th>
                                     <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{t('admin_product_title')}</th>
                                     <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{t('admin_product_price')}</th>
-                                    <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{t('admin_product_colors')}</th>
+                                    <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{isRTL ? 'المخزون' : 'Stock'}</th>
                                     <th className={`px-6 py-4 ${isRTL ? 'text-right' : 'text-left'}`}>{t('admin_product_actions')}</th>
                                 </tr>
                             </thead>
@@ -69,11 +69,9 @@ export default function ProductsManager() {
                                         <td className="px-6 py-4 font-medium">{product.title}</td>
                                         <td className="px-6 py-4 text-gray-600">{product.price} EGP</td>
                                         <td className="px-6 py-4">
-                                            <div className="flex gap-1">
-                                                {product.colors?.map((c, i) => (
-                                                    <div key={i} className="w-3 h-3 rounded-full border border-gray-100" style={{ backgroundColor: c }} />
-                                                ))}
-                                            </div>
+                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${product.stock > 10 ? 'bg-green-50 text-green-600' : product.stock > 0 ? 'bg-orange-50 text-orange-600' : 'bg-red-50 text-red-600'}`}>
+                                                {product.stock || 0}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex gap-4">

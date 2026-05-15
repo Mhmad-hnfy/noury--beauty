@@ -33,6 +33,8 @@ const translations = {
     add_to_cart: "Add to Cart",
     buy_now: "Buy it Now",
     in_stock: "In stock",
+    out_of_stock: "Out of Stock",
+    stock_available: "Stock available",
     color: "Color",
     view_details: "View details",
     // Footer
@@ -126,6 +128,8 @@ const translations = {
     add_to_cart: "أضف للسلة",
     buy_now: "شراء الآن",
     in_stock: "متوفر بالمخزن",
+    out_of_stock: "نفد من المخزن",
+    stock_available: "الكمية المتوفرة",
     color: "اللون",
     view_details: "عرض التفاصيل",
     // Footer
@@ -301,9 +305,8 @@ export const StoreProvider = ({ children }) => {
     const savedCart = localStorage.getItem('noury_cart');
     if (savedCart) setCart(JSON.parse(savedCart));
 
-    fetchProducts();
-    fetchReviews();
-    fetchShippingRates();
+    // Run all fetches in parallel for faster loading
+    Promise.all([fetchProducts(), fetchReviews(), fetchShippingRates()]);
   }, []);
 
   const fetchProducts = async () => {
@@ -327,12 +330,32 @@ export const StoreProvider = ({ children }) => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      // Normalize data (mapping old_price to oldPrice for UI consistency)
-      const normalizedData = data?.map(p => ({
-          ...p,
-          oldPrice: p.oldPrice || p.old_price,
-          variants: p.variants || []
-      }));
+      // Normalize: handle old single-image and new multi-image variants
+      const normalizedData = data?.map(p => {
+          const variants = (p.variants || []).map(v => ({
+              ...v,
+              // Normalize: ensure `images` array exists for each variant
+              images: v.images && v.images.length > 0
+                  ? v.images
+                  : v.image ? [v.image] : [],
+          }));
+
+          // Rebuild flat images & colors from variants if available
+          const colors = variants.length > 0
+              ? variants.map(v => v.color)
+              : (p.colors || []);
+          const images = variants.length > 0
+              ? variants.flatMap(v => v.images)
+              : (p.images || []);
+
+          return {
+              ...p,
+              oldPrice: p.oldPrice || p.old_price,
+              variants,
+              colors,
+              images,
+          };
+      });
       setProducts(normalizedData?.length > 0 ? normalizedData : MOCK_PRODUCTS);
     } catch (error) {
       console.error('Error fetching products:', error.message);
@@ -433,10 +456,9 @@ export const StoreProvider = ({ children }) => {
     });
   };
 
-  const addToCart = (product, qty = 1, color = null) => {
+  const addToCart = (product, qty = 1) => {
     setCart(prev => {
-      // Create a unique ID based on product ID and color
-      const cartItemId = `${product.id}-${color || 'standard'}`;
+      const cartItemId = product.id;
       const existingItemIndex = prev.findIndex(item => item.cartItemId === cartItemId);
       
       let updated;
@@ -447,8 +469,7 @@ export const StoreProvider = ({ children }) => {
         updated = [...prev, { 
           ...product, 
           cartItemId, 
-          qty, 
-          selectedColor: color 
+          qty
         }];
       }
       localStorage.setItem('noury_cart', JSON.stringify(updated));

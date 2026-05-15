@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react'
+import Image from 'next/image';
 import { useStore } from '@/context/StoreContext';
 
 function Prof() {
@@ -13,10 +14,13 @@ function Prof() {
         {/* Left Column: Square Image */}
         <div className="w-full lg:w-[32%] flex-shrink-0">
           <div className="relative aspect-square overflow-hidden rounded-sm">
-            <img 
+            <Image 
               src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1000&auto=format&fit=crop" 
               alt="Noury Beauty Profile"
-              className="w-full h-full object-cover shadow-sm transition-transform duration-700 hover:scale-105"
+              fill
+              sizes="(max-width: 1024px) 100vw, 32vw"
+              className="object-cover shadow-sm transition-transform duration-700 hover:scale-105"
+              priority
             />
           </div>
         </div>
@@ -42,4 +46,4 @@ function Prof() {
   )
 }
 
-export default Prof
+export default Prof
