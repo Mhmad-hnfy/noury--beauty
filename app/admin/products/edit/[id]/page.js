@@ -9,7 +9,7 @@ import imageCompression from 'browser-image-compression';
 export default function EditProduct() {
     const { id } = useParams();
     const router = useRouter();
-    const { products, fetchProducts, isLoading } = useStore();
+    const { products, fetchProducts, isLoading, isRTL } = useStore();
 
     const [loading, setLoading] = useState(false);
     const [notFound, setNotFound] = useState(false);
@@ -130,7 +130,17 @@ export default function EditProduct() {
     if (isLoading) return <div className="p-20 text-center"><div className="w-8 h-8 border-4 border-[#6d1616] border-t-transparent rounded-full animate-spin mx-auto"></div></div>;
 
     return (
-        <div className="max-w-6xl flex flex-col gap-10 pb-20">
+        <div className="max-w-6xl flex flex-col gap-10 pb-20 relative">
+            {/* Loading Overlay */}
+            {loading && (
+                <div className="fixed inset-0 bg-white/60 backdrop-blur-[2px] z-[9999] flex flex-col items-center justify-center gap-4">
+                    <div className="w-12 h-12 border-4 border-[#6d1616] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#6d1616] animate-pulse">
+                        {isRTL ? 'جاري حفظ التعديلات...' : 'Saving Changes...'}
+                    </p>
+                </div>
+            )}
+
             <div className="flex flex-col gap-1">
                 <h3 className="text-2xl font-serif text-black">Edit: {formData.title}</h3>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Upload product images</p>
@@ -169,8 +179,18 @@ export default function EditProduct() {
                                 )}
                                 <button
                                     type="button"
-                                    onClick={() => removeImage(idx)}
-                                    className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => {
+                                        const existingCount = existingImages.length;
+                                        if (idx < existingCount) {
+                                            if (confirm(isRTL ? 'هل أنت متأكد من حذف هذه الصورة؟' : 'Are you sure you want to remove this image?')) {
+                                                removeImage(idx);
+                                            }
+                                        } else {
+                                            removeImage(idx);
+                                        }
+                                    }}
+                                    className="absolute top-1 right-1 w-6 h-6 bg-black/80 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-all z-10"
+                                    title={isRTL ? "حذف الصورة" : "Delete Image"}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
                                 </button>
@@ -192,11 +212,38 @@ export default function EditProduct() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end gap-4">
-                    <button type="button" onClick={() => router.back()} className="h-14 px-8 border border-gray-200 text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-black hover:border-black transition-all">Cancel</button>
-                    <button type="submit" disabled={loading} className="h-14 px-12 bg-[#6d1616] text-white font-bold text-xs uppercase tracking-widest shadow-xl hover:bg-black transition-all disabled:opacity-50">
-                        {loading ? 'Saving...' : 'Update Product'}
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mt-10">
+                    <button 
+                        type="button" 
+                        onClick={async () => {
+                            if (confirm(isRTL ? 'هل أنت متأكد من حذف هذا المنتج نهائياً؟' : 'Are you sure you want to delete this product permanently?')) {
+                                try {
+                                    setLoading(true);
+                                    if (supabase) {
+                                        const { error } = await supabase.from('products').delete().eq('id', id);
+                                        if (error) throw error;
+                                    }
+                                    await fetchProducts();
+                                    router.push('/admin/products');
+                                } catch (err) {
+                                    alert(err.message);
+                                    setLoading(false);
+                                }
+                            }
+                        }}
+                        className="text-red-600 font-bold text-[10px] uppercase tracking-widest hover:underline"
+                    >
+                        {isRTL ? 'حذف المنتج بالكامل' : 'Delete Entire Product'}
                     </button>
+
+                    <div className="flex gap-4 w-full sm:w-auto">
+                        <button type="button" onClick={() => router.back()} className="flex-1 sm:flex-none h-14 px-8 border border-gray-200 text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-black hover:border-black transition-all">
+                            {isRTL ? 'إلغاء' : 'Cancel'}
+                        </button>
+                        <button type="submit" disabled={loading} className="flex-1 sm:flex-none h-14 px-12 bg-[#6d1616] text-white font-bold text-xs uppercase tracking-widest shadow-xl hover:bg-black transition-all disabled:opacity-50">
+                            {loading ? (isRTL ? 'جاري الحفظ...' : 'Saving...') : (isRTL ? 'تحديث المنتج' : 'Update Product')}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

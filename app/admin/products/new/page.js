@@ -8,7 +8,7 @@ import imageCompression from 'browser-image-compression';
 
 export default function NewProduct() {
     const router = useRouter();
-    const { fetchProducts, addProduct } = useStore();
+    const { fetchProducts, addProduct, isRTL } = useStore();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -113,7 +113,17 @@ export default function NewProduct() {
     };
 
     return (
-        <div className="max-w-6xl flex flex-col gap-10 animate-in fade-in duration-500 pb-20">
+        <div className="max-w-6xl flex flex-col gap-10 animate-in fade-in duration-500 pb-20 relative">
+            {/* Loading Overlay */}
+            {loading && (
+                <div className="fixed inset-0 bg-white/60 backdrop-blur-[2px] z-[9999] flex flex-col items-center justify-center gap-4">
+                    <div className="w-12 h-12 border-4 border-[#6d1616] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#6d1616] animate-pulse">
+                        {isRTL ? 'جاري إنشاء المنتج...' : 'Creating Product...'}
+                    </p>
+                </div>
+            )}
+
             <div className="flex flex-col gap-1">
                 <h3 className="text-2xl font-serif text-black">Add New Product</h3>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Upload product images</p>
@@ -153,7 +163,8 @@ export default function NewProduct() {
                                 <button
                                     type="button"
                                     onClick={() => removeImage(idx)}
-                                    className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute top-1 right-1 w-6 h-6 bg-black/80 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-all z-10"
+                                    title={isRTL ? "حذف الصورة" : "Delete Image"}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
                                 </button>
@@ -181,14 +192,14 @@ export default function NewProduct() {
                         onClick={() => router.back()}
                         className="h-14 px-10 border border-gray-200 text-gray-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-black hover:border-black transition-all"
                     >
-                        Back to List
+                        {isRTL ? 'الرجوع للقائمة' : 'Back to List'}
                     </button>
                     <button
                         disabled={loading || previews.length === 0}
                         type="submit"
                         className="h-14 px-12 bg-[#6d1616] text-white font-bold text-xs uppercase tracking-[0.2em] hover:bg-black transition-all duration-300 shadow-xl disabled:opacity-50"
                     >
-                        {loading ? 'Uploading...' : 'Create Product'}
+                        {loading ? (isRTL ? 'جاري الرفع...' : 'Uploading...') : (isRTL ? 'إضافة المنتج' : 'Create Product')}
                     </button>
                 </div>
 
