@@ -10,16 +10,25 @@ export default function QuickView({ isOpen, onClose, product }) {
     const { t, isRTL, addToCart } = useStore();
     const [quantity, setQuantity] = useState(1);
     const [activeImage, setActiveImage] = useState(null);
+    const [selectedSize, setSelectedSize] = useState(null);
+
     const allImagesList = product?.allImages?.length > 0 ? product.allImages : (product?.image ? [product.image] : []);
+    const hasSizes = product?.sizes && product.sizes.length > 0;
+
+    // Derived price: use selected size price if any, otherwise product base price
+    const displayPrice = selectedSize ? selectedSize.price : product?.price;
+    const displayOldPrice = selectedSize ? null : product?.oldPrice;
 
     const [touchStart, setTouchStart] = useState(null);
     const [touchEnd, setTouchEnd] = useState(null);
 
-    // On open: set initial active image
+    // On open: reset state
     useEffect(() => {
         if (product && isOpen) {
             setQuantity(1);
             setActiveImage(allImagesList[0] || null);
+            // Auto-select first size if available
+            setSelectedSize(product.sizes && product.sizes.length > 0 ? product.sizes[0] : null);
         }
     }, [product, isOpen]);
 
@@ -163,16 +172,49 @@ export default function QuickView({ isOpen, onClose, product }) {
                             {product.title}
                         </h2>
                         <div className="flex items-center gap-4 mt-1">
-                            <p className={`text-2xl md:text-3xl font-medium ${product.oldPrice ? 'text-[#f95d5d]' : 'text-black'}`}>
-                                {product.price}
+                            <p className={`text-2xl md:text-3xl font-medium transition-all duration-300 ${displayOldPrice ? 'text-[#f95d5d]' : 'text-black'}`}>
+                                {parseFloat(displayPrice?.toString().replace(/[^0-9.]/g, '') || 0).toLocaleString('en-EG')} EGP
                             </p>
-                            {product.oldPrice && (
+                            {displayOldPrice && (
                                 <p className="text-lg text-gray-400 line-through font-light italic">
-                                    {product.oldPrice}
+                                    {parseFloat(displayOldPrice?.toString().replace(/[^0-9.]/g, '') || 0).toLocaleString('en-EG')} EGP
                                 </p>
                             )}
                         </div>
                     </div>
+
+                    {/* Sizes Selector */}
+                    {hasSizes && (
+                        <div className="flex flex-col gap-3">
+                            <p className="text-[10px] font-bold text-black uppercase tracking-[0.2em]">
+                                {isRTL ? 'المقاس' : 'Size'}
+                                {selectedSize && (
+                                    <span className="text-[#6d1616] ms-2 normal-case font-normal tracking-normal">
+                                        — {selectedSize.label}
+                                    </span>
+                                )}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {product.sizes.map((size, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => setSelectedSize(size)}
+                                        className={`relative px-4 py-2.5 border text-xs font-bold uppercase tracking-widest transition-all duration-200 rounded-sm ${
+                                            selectedSize?.label === size.label
+                                                ? 'border-[#6d1616] bg-[#6d1616] text-white shadow-md'
+                                                : 'border-gray-200 text-gray-600 hover:border-[#6d1616] hover:text-[#6d1616]'
+                                        }`}
+                                    >
+                                        <span>{size.label}</span>
+                                        <span className={`block text-[9px] font-medium mt-0.5 ${selectedSize?.label === size.label ? 'text-white/80' : 'text-gray-400'}`}>
+                                            {parseFloat(size.price).toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Quantity */}
                     <div className="flex flex-col gap-3">
@@ -197,7 +239,10 @@ export default function QuickView({ isOpen, onClose, product }) {
                         <button
                             disabled={product.stock <= 0}
                             onClick={() => {
-                                addToCart(product, quantity);
+                                const cartProduct = selectedSize
+                                    ? { ...product, price: selectedSize.price, selectedSize: selectedSize.label }
+                                    : product;
+                                addToCart(cartProduct, quantity);
                                 onClose();
                             }}
                             className="w-full bg-black text-white font-bold text-xs uppercase tracking-[0.3em] hover:bg-[#6d1616] transition-all duration-300 h-16 shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -209,6 +254,8 @@ export default function QuickView({ isOpen, onClose, product }) {
                             onClick={() => {
                                 const checkoutItem = {
                                     ...product,
+                                    price: selectedSize ? selectedSize.price : product.price,
+                                    selectedSize: selectedSize ? selectedSize.label : null,
                                     qty: quantity,
                                     displayImage: activeImage
                                 };

@@ -48,6 +48,7 @@ function Hero() {
                 image={product.images?.[0] || product.image}
                 allImages={product.images || [product.image]}
                 variants={product.variants}
+                sizes={product.sizes || []}
                 stock={product.stock}
                 priority={index < 4}
                 onQuickView={setQuickViewProduct}

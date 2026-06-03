@@ -16,6 +16,10 @@ export default function EditProduct() {
 
     const [formData, setFormData] = useState({ title: '', price: '', oldPrice: '', stock: '0' });
 
+    // Sizes: array of { label: string, price: string }
+    const [sizes, setSizes] = useState([]);
+    const [newSize, setNewSize] = useState({ label: '', price: '' });
+
     const [existingImages, setExistingImages] = useState([]);
     const [imageFiles, setImageFiles] = useState([]);
     const [previews, setPreviews] = useState([]);
@@ -34,6 +38,14 @@ export default function EditProduct() {
                 const imgs = product.images || (product.image ? [product.image] : []);
                 setExistingImages(imgs);
                 setPreviews(imgs);
+
+                // Load existing sizes
+                const existingSizes = (product.sizes || []).map(s => ({
+                    label: s.label,
+                    price: s.price?.toString() || ''
+                }));
+                setSizes(existingSizes);
+
                 setNotFound(false);
             } else {
                 setNotFound(true);
@@ -57,6 +69,27 @@ export default function EditProduct() {
             setImageFiles(imageFiles.filter((_, i) => i !== fileIndex));
         }
         setPreviews(previews.filter((_, i) => i !== index));
+    };
+
+    const handleAddSize = () => {
+        const label = newSize.label.trim();
+        const price = newSize.price.trim();
+        if (!label || !price) return;
+        if (sizes.find(s => s.label.toLowerCase() === label.toLowerCase())) {
+            alert(isRTL ? 'هذا المقاس موجود بالفعل' : 'This size already exists');
+            return;
+        }
+        setSizes([...sizes, { label, price }]);
+        setNewSize({ label: '', price: '' });
+    };
+
+    const handleRemoveSize = (index) => {
+        setSizes(sizes.filter((_, i) => i !== index));
+    };
+
+    const handleUpdateSize = (index, field, value) => {
+        const updated = sizes.map((s, i) => i === index ? { ...s, [field]: value } : s);
+        setSizes(updated);
     };
 
     const handleSubmit = async (e) => {
@@ -107,7 +140,8 @@ export default function EditProduct() {
                         stock: parseInt(formData.stock) || 0,
                         images: allImages,
                         colors: [],
-                        variants: []
+                        variants: [],
+                        sizes: sizes.map(s => ({ label: s.label, price: parseFloat(s.price) }))
                     })
                     .eq('id', id);
 
@@ -156,6 +190,100 @@ export default function EditProduct() {
                         <InputGroup label="Price (EGP)" type="number" value={formData.price} onChange={(v) => setFormData({...formData, price: v})} />
                         <InputGroup label="Old Price (Optional)" type="number" value={formData.oldPrice} onChange={(v) => setFormData({...formData, oldPrice: v})} />
                         <InputGroup label="Stock Quantity" type="number" value={formData.stock} onChange={(v) => setFormData({...formData, stock: v})} />
+                    </div>
+                </div>
+
+                {/* Sizes Section */}
+                <div className="bg-white p-10 border border-gray-100 rounded-sm shadow-sm flex flex-col gap-8">
+                    <div className="border-b border-gray-50 pb-4">
+                        <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#6d1616]">
+                            {isRTL ? 'المقاسات والأسعار' : 'Sizes & Prices'}
+                        </h4>
+                        <p className="text-[9px] text-gray-400 mt-1">
+                            {isRTL ? 'اختياري — أضف مقاسات مختلفة لكل منها سعر خاص' : 'Optional — add different sizes each with its own price'}
+                        </p>
+                    </div>
+
+                    {/* Existing sizes list */}
+                    {sizes.length > 0 && (
+                        <div className="flex flex-col gap-3">
+                            {sizes.map((size, idx) => (
+                                <div key={idx} className="flex items-center gap-4 p-4 bg-gray-50 border border-gray-100 rounded-sm">
+                                    <div className="flex-1 grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                                                {isRTL ? 'المقاس' : 'Size Label'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={size.label}
+                                                onChange={(e) => handleUpdateSize(idx, 'label', e.target.value)}
+                                                className="h-10 px-3 border border-gray-200 rounded-sm focus:outline-none focus:border-[#6d1616] text-sm font-medium"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                                                {isRTL ? 'السعر (ج.م)' : 'Price (EGP)'}
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={size.price}
+                                                onChange={(e) => handleUpdateSize(idx, 'price', e.target.value)}
+                                                className="h-10 px-3 border border-gray-200 rounded-sm focus:outline-none focus:border-[#6d1616] text-sm font-medium"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveSize(idx)}
+                                        className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                                        title={isRTL ? 'حذف المقاس' : 'Remove Size'}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Add new size row */}
+                    <div className="flex items-end gap-4 p-5 border-2 border-dashed border-gray-200 rounded-sm">
+                        <div className="flex-1 grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                                    {isRTL ? 'اسم المقاس' : 'Size Label'}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newSize.label}
+                                    onChange={(e) => setNewSize({ ...newSize, label: e.target.value })}
+                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSize())}
+                                    placeholder={isRTL ? 'مثال: صغير, كبير, 100ml' : 'e.g. Small, Large, 100ml'}
+                                    className="h-10 px-3 border border-gray-200 rounded-sm focus:outline-none focus:border-[#6d1616] text-sm font-medium"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                                    {isRTL ? 'السعر (ج.م)' : 'Price (EGP)'}
+                                </label>
+                                <input
+                                    type="number"
+                                    value={newSize.price}
+                                    onChange={(e) => setNewSize({ ...newSize, price: e.target.value })}
+                                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSize())}
+                                    placeholder="0.00"
+                                    className="h-10 px-3 border border-gray-200 rounded-sm focus:outline-none focus:border-[#6d1616] text-sm font-medium"
+                                />
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleAddSize}
+                            className="h-10 px-6 bg-[#6d1616] text-white font-bold text-[10px] uppercase tracking-widest hover:bg-black transition-all rounded-sm flex items-center gap-2 whitespace-nowrap"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                            {isRTL ? 'إضافة' : 'Add Size'}
+                        </button>
                     </div>
                 </div>
 

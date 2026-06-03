@@ -259,6 +259,7 @@ const DEFAULT_REVIEWS = [
 
 export const StoreProvider = ({ children }) => {
   const [language, setLanguage] = useState('en');
+  const [toasts, setToasts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -354,6 +355,7 @@ export const StoreProvider = ({ children }) => {
               variants,
               colors,
               images,
+              sizes: p.sizes || [],
           };
       });
       setProducts(normalizedData?.length > 0 ? normalizedData : MOCK_PRODUCTS);
@@ -456,9 +458,24 @@ export const StoreProvider = ({ children }) => {
     });
   };
 
+  const addToast = (message, type = 'success') => {
+    console.log("addToast function called. message:", message, "type:", type);
+    const id = Date.now() + Math.random();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3500);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
   const addToCart = (product, qty = 1) => {
     setCart(prev => {
-      const cartItemId = product.id;
+      const cartItemId = product.selectedSize
+        ? `${product.id}_${product.selectedSize}`
+        : product.id;
       const existingItemIndex = prev.findIndex(item => item.cartItemId === cartItemId);
       
       let updated;
@@ -473,9 +490,11 @@ export const StoreProvider = ({ children }) => {
         }];
       }
       localStorage.setItem('noury_cart', JSON.stringify(updated));
-      setIsCartOpen(true);
       return updated;
     });
+    // Show toast
+    const sizePart = product.selectedSize ? ` — ${product.selectedSize}` : '';
+    addToast(`${product.title}${sizePart}`, 'cart');
   };
 
   const removeFromCart = (cartItemId) => {
@@ -541,7 +560,10 @@ export const StoreProvider = ({ children }) => {
       updateCartQty,
       clearCart,
       isCartOpen,
-      setIsCartOpen
+      setIsCartOpen,
+      toasts,
+      addToast,
+      removeToast
     }}>
       <div dir={isRTL ? 'rtl' : 'ltr'} className={isRTL ? 'font-sans-arabic' : ''}>
         {children}

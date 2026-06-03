@@ -13,6 +13,7 @@ export default function Card({
     colors = ["#ff7dab"],
     allImages = [],
     variants = [],
+    sizes = [],
     stock = 99, // default to some high number if not provided
     priority = false,
     onQuickView,
@@ -20,7 +21,7 @@ export default function Card({
     const { t, wishlist, toggleWishlist } = useStore();
 
     const isWishlisted = wishlist.some(item => item.id === id);
-    const productData = { id, title, price, oldPrice, image: allImages?.[0] || image, colors, allImages, variants, stock };
+    const productData = { id, title, price, oldPrice, image: allImages?.[0] || image, colors, allImages, variants, sizes, stock };
 
     return (
         <div className="flex flex-col bg-white w-full max-w-[400px] font-sans group cursor-pointer relative">
